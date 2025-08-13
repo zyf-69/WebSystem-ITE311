@@ -8,6 +8,7 @@ class Home extends Controller
 {
     public function index()
     {
-        return view('template.php'); // Entemsure this view exists in app/Views/
+        // Load the template with home content
+        return view('template');
     }
 }
