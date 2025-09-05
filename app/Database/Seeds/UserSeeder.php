@@ -37,4 +37,16 @@ class UserSeeder extends Seeder
 
         $this->db->table('users')->insertBatch($users);
     }
+<<<<<<< HEAD
+=======
+
+    public function rollback()
+    {
+        $tables = ['users', 'courses', 'enrollments', 'lessons', 'quizzes', 'submissions'];
+
+        foreach ($tables as $table) {
+            $this->db->table($table)->truncate();
+        }
+    }
+>>>>>>> 90cc1f5 (Added Home controller, routes, and views for basic navigation)
 }
