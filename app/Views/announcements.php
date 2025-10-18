@@ -57,8 +57,6 @@
                                             </h5>
                                             <p class="mb-2"><?= nl2br(esc($announcement['content'])) ?></p>
                                             <div class="d-flex align-items-center text-muted small">
-                                                <i class="bi bi-person-circle me-1"></i>
-                                                <span class="me-3">Posted by: <strong><?= esc($announcement['posted_by_name']) ?></strong></span>
                                                 <i class="bi bi-calendar-event me-1"></i>
                                                 <span><?= date('F d, Y \a\t g:i A', strtotime($announcement['created_at'])) ?></span>
                                             </div>

@@ -26,8 +26,10 @@ class Announcement extends Controller
      */
     public function index()
     {
-        // Get all announcements with user information
-        $announcements = $this->announcementModel->getAllWithUser();
+        // Fetch all announcements ordered by created_at DESC (newest first)
+        $announcements = $this->announcementModel
+                              ->orderBy('created_at', 'DESC')
+                              ->findAll();
 
         $data = [
             'title' => 'Announcements',

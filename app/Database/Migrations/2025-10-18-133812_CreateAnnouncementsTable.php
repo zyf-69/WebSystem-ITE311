@@ -22,23 +22,13 @@ class CreateAnnouncementsTable extends Migration
             'content' => [
                 'type' => 'TEXT',
             ],
-            'posted_by' => [
-                'type'       => 'INT',
-                'constraint' => 5,
-                'unsigned'   => true,
-            ],
             'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-            'updated_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
             ],
         ]);
 
         $this->forge->addPrimaryKey('id');
-        $this->forge->addForeignKey('posted_by', 'users', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('announcements');
     }
 
