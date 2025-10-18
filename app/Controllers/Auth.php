@@ -74,8 +74,16 @@ class Auth extends Controller
                         'isLoggedIn' => true,
                     ]);
                     $session->setFlashdata('success', 'Welcome, ' . $user['name'] . '!');
-                    // Always go to the common dashboard
-                    return redirect()->to('/dashboard');
+                    
+                    // Role-based redirection (Task 3)
+                    if ($user['role'] === 'admin') {
+                        return redirect()->to('/admin/dashboard');
+                    } elseif ($user['role'] === 'teacher') {
+                        return redirect()->to('/teacher/dashboard');
+                    } else {
+                        // Students redirect to announcements
+                        return redirect()->to('/announcements');
+                    }
                 } else {
                     $session->setFlashdata('error', 'Invalid login credentials.');
                 }
@@ -90,22 +98,5 @@ class Auth extends Controller
     {
         session()->destroy();
         return redirect()->to('/login');
-    }
-
-    public function dashboard()
-    {
-        $session = session();
-        if (!$session->get('isLoggedIn')) {
-            return redirect()->to('/login');
-        }
-        $data = [
-            'user' => [
-                'id' => $session->get('user_id'),
-                'name' => $session->get('user_name'),
-                'email' => $session->get('user_email'),
-                'role' => $session->get('role'),
-            ],
-        ];
-        return view('dashboard', $data);
     }
 }

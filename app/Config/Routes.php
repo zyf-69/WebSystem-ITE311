@@ -25,14 +25,19 @@ $routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
 // Announcements route (requires authentication)
 $routes->get('announcements', 'Announcement::index', ['filter' => 'auth']);
 
-// Admin routes (requires authentication + admin role)
+// Admin routes (requires authentication + admin role) - Task 3
 $routes->group('admin', ['filter' => ['auth', 'role:admin']], function($routes) {
-    $routes->get('dashboard', 'DashboardController::adminDashboard');
+    $routes->get('dashboard', 'Admin::dashboard');
     $routes->get('users', 'AdminController::users');
     $routes->get('create-user', 'AdminController::createUser');
     $routes->post('create-user', 'AdminController::createUser');
     $routes->post('update-role/(:num)', 'AdminController::updateRole/$1');
     $routes->get('delete-user/(:num)', 'AdminController::deleteUser/$1');
+});
+
+// Teacher routes (requires authentication + teacher role) - Task 3
+$routes->group('teacher', ['filter' => ['auth', 'role:teacher']], function($routes) {
+    $routes->get('dashboard', 'Teacher::dashboard');
 });
 
 // Student routes (requires authentication + student role)
