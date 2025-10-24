@@ -19,8 +19,8 @@ $routes->get('register', 'Auth::register');
 $routes->post('register', 'Auth::register');
 $routes->get('logout', 'Auth::logout');
 
-// Dashboard routes (requires authentication)
-$routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
+// Dashboard route (unified, requires authentication)
+$routes->get('dashboard', 'Auth::dashboard', ['filter' => 'auth']);
 
 // Announcements route (requires authentication)
 $routes->get('announcements', 'Announcement::index', ['filter' => 'auth']);
