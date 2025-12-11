@@ -38,6 +38,12 @@ $routes->get('/announcements', 'Announcement::index', ['filter' => 'auth']); // 
 $routes->post('course/enroll', 'Course::enroll', ['filter' => 'auth']);
 $routes->post('/course/enroll', 'Course::enroll', ['filter' => 'auth']);
 
+// Course search routes (requires authentication)
+$routes->get('courses/search', 'Course::search', ['filter' => 'auth']);
+$routes->post('courses/search', 'Course::search', ['filter' => 'auth']);
+$routes->get('/courses/search', 'Course::search', ['filter' => 'auth']);
+$routes->post('/courses/search', 'Course::search', ['filter' => 'auth']);
+
 // My Course route (simplified URL - for both teachers and students)
 $routes->get('my-course', 'Auth::myCourse', ['filter' => 'roleauth']);
 $routes->get('/my-course', 'Auth::myCourse', ['filter' => 'roleauth']);
@@ -76,6 +82,8 @@ $routes->group('teacher', ['filter' => 'roleauth'], function($routes) {
     $routes->get('my-students', 'Teacher::myStudents');
     $routes->get('accept-enrollment/(:num)', 'Teacher::acceptEnrollment/$1');
     $routes->get('decline-enrollment/(:num)', 'Teacher::declineEnrollment/$1');
+    $routes->post('decline-enrollment/(:num)', 'Teacher::declineEnrollment/$1');
+    $routes->post('enroll-student', 'Teacher::enrollStudent');
     $routes->get('unenroll-student/(:num)', 'Teacher::unenrollStudent/$1');
 });
 
@@ -91,3 +99,7 @@ $routes->get('/admin/course/(:num)/upload', 'Materials::upload/$1', ['filter' =>
 $routes->post('/admin/course/(:num)/upload', 'Materials::upload/$1', ['filter' => 'auth']);
 $routes->get('/materials/delete/(:num)', 'Materials::delete/$1', ['filter' => 'roleauth']);
 $routes->get('/materials/download/(:num)', 'Materials::download/$1', ['filter' => 'auth']);
+
+// Notifications routes (requires authentication)
+$routes->get('notifications', 'Notifications::get', ['filter' => 'auth']);
+$routes->post('notifications/mark_read/(:num)', 'Notifications::mark_as_read/$1', ['filter' => 'auth']);

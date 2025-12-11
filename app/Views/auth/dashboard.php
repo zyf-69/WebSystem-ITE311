@@ -265,7 +265,7 @@
                                             <a href="<?= base_url('announcements') ?>" class="btn btn-primary">
                                                 <i class="bi bi-megaphone"></i> View Announcements
                                             </a>
-                                            <a href="<?= base_url('student/dashboard') ?>" class="btn btn-outline-primary">
+                                            <a href="<?= base_url('dashboard') ?>" class="btn btn-outline-primary">
                                                 <i class="bi bi-book"></i> My Courses
                                             </a>
                                             <a href="#" class="btn btn-outline-primary">
@@ -428,6 +428,24 @@
                                 </h5>
                             </div>
                             <div class="card-body" id="available-courses-section">
+                                <!-- Search Form -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <form id="searchForm" class="d-flex">
+                                            <div class="input-group">
+                                                <input type="text" 
+                                                       id="searchInput" 
+                                                       class="form-control" 
+                                                       placeholder="Search courses..." 
+                                                       name="search_term">
+                                                <button class="btn btn-outline-primary" type="submit">
+                                                    <i class="bi bi-search"></i> Search
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                
                                 <?php if (empty($roleData['available_courses'])): ?>
                                     <div class="text-center py-4">
                                         <i class="bi bi-check-circle fs-1 text-success"></i>
@@ -436,7 +454,7 @@
                                 <?php else: ?>
                                     <div class="list-group" id="available-courses-list">
                                         <?php foreach ($roleData['available_courses'] as $course): ?>
-                                            <div class="list-group-item" data-course-id="<?= $course['id'] ?>">
+                                            <div class="list-group-item course-card" data-course-id="<?= $course['id'] ?>">
                                                 <div class="d-flex w-100 justify-content-between align-items-start">
                                                     <div class="flex-grow-1">
                                                         <h6 class="mb-1">
@@ -468,6 +486,49 @@
                 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
                 <script>
                 $(document).ready(function() {
+                    // Client-side filtering (Instant Search)
+                    $('#searchInput').on('keyup', function() {
+                        var value = $(this).val().toLowerCase();
+                        $('.course-card').filter(function() {
+                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                        });
+                    });
+                    
+                    // Server-side search with AJAX
+                    $('#searchForm').on('submit', function(e) {
+                        e.preventDefault();
+                        var searchTerm = $('#searchInput').val();
+                        
+                        $.get('<?= base_url('courses/search') ?>', {search_term: searchTerm}, function(data) {
+                            $('#available-courses-list').empty();
+                            
+                            if (data.length > 0) {
+                                $.each(data, function(index, course) {
+                                    var courseHtml = '<div class="list-group-item course-card" data-course-id="' + course.id + '">' +
+                                        '<div class="d-flex w-100 justify-content-between align-items-start">' +
+                                        '<div class="flex-grow-1">' +
+                                        '<h6 class="mb-1">' +
+                                        '<i class="bi bi-book text-primary"></i> ' + (course.title || 'Course #' + course.id) +
+                                        '</h6>' +
+                                        '<p class="mb-1 small text-muted">' + (course.description || 'No description available') + '</p>' +
+                                        '</div>' +
+                                        '<div>' +
+                                        '<button type="button" class="btn btn-sm btn-success enroll-btn" data-course-id="' + course.id + '">' +
+                                        '<i class="bi bi-plus-circle"></i> Enroll' +
+                                        '</button>' +
+                                        '</div>' +
+                                        '</div>' +
+                                        '</div>';
+                                    $('#available-courses-list').append(courseHtml);
+                                });
+                            } else {
+                                $('#available-courses-list').html('<div class="col-12"><div class="alert alert-info">No courses found matching your search.</div></div>');
+                            }
+                        }).fail(function() {
+                            $('#available-courses-list').html('<div class="col-12"><div class="alert alert-danger">Error performing search. Please try again.</div></div>');
+                        });
+                    });
+                    
                     // Listen for click on Enroll button
                     $(document).on('click', '.enroll-btn', function(e) {
                         e.preventDefault();
