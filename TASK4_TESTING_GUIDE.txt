@@ -1,0 +1,100 @@
+TASK 4: ROLEAUTH FILTER - QUICK TESTING GUIDE
+==============================================
+
+🔒 SECURITY FILTER TESTING
+
+STEP 1: Test Admin Access
+--------------------------
+1. Login: admin@lms.com / admin123
+2. Try these URLs:
+   ✅ http://localhost:8080/admin/dashboard (SHOULD WORK)
+   ✅ http://localhost:8080/admin/users (SHOULD WORK)
+   ❌ http://localhost:8080/teacher/dashboard (SHOULD BLOCK)
+   
+Expected Result:
+- Admin routes work fine
+- Teacher route shows: "Access Denied: Insufficient Permissions"
+- Redirects to /announcements
+
+
+STEP 2: Test Teacher Access
+----------------------------
+1. Logout, then login: maria.santos@lms.com / teacher123
+2. Try these URLs:
+   ✅ http://localhost:8080/teacher/dashboard (SHOULD WORK)
+   ❌ http://localhost:8080/admin/dashboard (SHOULD BLOCK)
+   ❌ http://localhost:8080/admin/users (SHOULD BLOCK)
+   
+Expected Result:
+- Teacher route works fine
+- Admin routes show: "Access Denied: Insufficient Permissions"
+- Redirects to /announcements
+
+
+STEP 3: Test Student Access
+----------------------------
+1. Logout, then login: john.doe@lms.com / student123
+2. Try these URLs:
+   ✅ http://localhost:8080/announcements (SHOULD WORK)
+   ✅ http://localhost:8080/student/dashboard (SHOULD WORK)
+   ❌ http://localhost:8080/admin/dashboard (SHOULD BLOCK)
+   ❌ http://localhost:8080/teacher/dashboard (SHOULD BLOCK)
+   
+Expected Result:
+- Student and announcements routes work
+- Admin/Teacher routes show: "Access Denied: Insufficient Permissions"
+- Redirects to /announcements
+
+
+STEP 4: Test Unauthenticated Access
+------------------------------------
+1. Logout completely
+2. Try: http://localhost:8080/admin/dashboard
+   
+Expected Result:
+- Shows: "Please login first."
+- Redirects to /login
+
+
+QUICK VERIFICATION CHECKLIST
+=============================
+[ ] Admin can access /admin/* routes
+[ ] Admin CANNOT access /teacher/* routes
+[ ] Teacher can access /teacher/* routes
+[ ] Teacher CANNOT access /admin/* routes
+[ ] Student can access /announcements
+[ ] Student can access /student/* routes
+[ ] Student CANNOT access /admin/* or /teacher/* routes
+[ ] Unauthenticated users redirected to login
+[ ] Error message displays correctly
+[ ] All redirects work properly
+
+
+WHAT TO LOOK FOR
+=================
+✅ SUCCESS: Route loads normally
+❌ BLOCKED: Red error message at top
+           "Access Denied: Insufficient Permissions"
+           Page shows announcements list
+
+
+COMMON ISSUES
+=============
+Issue: Filter not working
+Fix: Check app/Config/Filters.php has 'roleauth' registered
+
+Issue: Still can access wrong routes
+Fix: Clear browser cache and session
+
+Issue: No error message
+Fix: Check flash message display in view template
+
+
+TEST CREDENTIALS
+================
+Admin:    admin@lms.com / admin123
+Teacher:  maria.santos@lms.com / teacher123
+Student:  john.doe@lms.com / student123
+
+
+🎯 ALL TESTS SHOULD PASS FOR TASK 4 COMPLETION!

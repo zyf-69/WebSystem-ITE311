@@ -1,0 +1,46 @@
+# CodeIgniter 4
+/writable/*
+!/writable/.gitkeep
+!/writable/cache/.gitkeep
+!/writable/logs/.gitkeep
+!/writable/session/.gitkeep
+!/writable/uploads/.gitkeep
+!/writable/debugbar/.gitkeep
+
+# Environment
+.env
+env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Composer
+/vendor/
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+
+# Cache
+/writable/cache/*
+!/writable/cache/.gitkeep
+
+# Session
+/writable/session/*
+!/writable/session/.gitkeep
+
+# Debugbar
+/writable/debugbar/*
+!/writable/debugbar/.gitkeep
+
