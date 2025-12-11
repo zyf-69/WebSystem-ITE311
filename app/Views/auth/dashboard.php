@@ -483,50 +483,49 @@
                 </div>
                 
                 <!-- AJAX Enrollment Script -->
-                <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
                 <script>
                 $(document).ready(function() {
-                    // Client-side filtering (Instant Search)
-                    $('#searchInput').on('keyup', function() {
-                        var value = $(this).val().toLowerCase();
-                        $('.course-card').filter(function() {
-                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-                        });
-                    });
-                    
-                    // Server-side search with AJAX
-                    $('#searchForm').on('submit', function(e) {
-                        e.preventDefault();
-                        var searchTerm = $('#searchInput').val();
+                    // Auto-filtering as user types (Instant Search)
+                    function filterAvailableCourses() {
+                        var searchValue = $('#searchInput').val().toLowerCase().trim();
                         
-                        $.get('<?= base_url('courses/search') ?>', {search_term: searchTerm}, function(data) {
-                            $('#available-courses-list').empty();
+                        // Remove previous no results message
+                        $('#noResultsMessage').remove();
+                        
+                        // Filter course cards
+                        var hasVisibleCards = false;
+                        $('.course-card').each(function() {
+                            var $card = $(this);
+                            var cardText = $card.text().toLowerCase();
                             
-                            if (data.length > 0) {
-                                $.each(data, function(index, course) {
-                                    var courseHtml = '<div class="list-group-item course-card" data-course-id="' + course.id + '">' +
-                                        '<div class="d-flex w-100 justify-content-between align-items-start">' +
-                                        '<div class="flex-grow-1">' +
-                                        '<h6 class="mb-1">' +
-                                        '<i class="bi bi-book text-primary"></i> ' + (course.title || 'Course #' + course.id) +
-                                        '</h6>' +
-                                        '<p class="mb-1 small text-muted">' + (course.description || 'No description available') + '</p>' +
-                                        '</div>' +
-                                        '<div>' +
-                                        '<button type="button" class="btn btn-sm btn-success enroll-btn" data-course-id="' + course.id + '">' +
-                                        '<i class="bi bi-plus-circle"></i> Enroll' +
-                                        '</button>' +
-                                        '</div>' +
-                                        '</div>' +
-                                        '</div>';
-                                    $('#available-courses-list').append(courseHtml);
-                                });
+                            if (cardText.indexOf(searchValue) > -1) {
+                                $card.show();
+                                hasVisibleCards = true;
                             } else {
-                                $('#available-courses-list').html('<div class="col-12"><div class="alert alert-info">No courses found matching your search.</div></div>');
+                                $card.hide();
                             }
-                        }).fail(function() {
-                            $('#available-courses-list').html('<div class="col-12"><div class="alert alert-danger">Error performing search. Please try again.</div></div>');
                         });
+                        
+                        // Show message if no results and search has value
+                        if (searchValue !== '' && !hasVisibleCards) {
+                            $('#available-courses-list').append(
+                                '<div class="list-group-item" id="noResultsMessage">' +
+                                '<div class="alert alert-info mb-0">' +
+                                '<i class="bi bi-info-circle"></i> No courses found matching your search.' +
+                                '</div>' +
+                                '</div>'
+                            );
+                        }
+                    }
+                    
+                    // Bind events for auto-filtering using event delegation
+                    $(document).on('keyup input paste', '#searchInput', filterAvailableCourses);
+                    
+                    // Prevent form submission - just use auto-filtering
+                    $(document).on('submit', '#searchForm', function(e) {
+                        e.preventDefault();
+                        filterAvailableCourses();
+                        return false;
                     });
                     
                     // Listen for click on Enroll button
@@ -611,6 +610,24 @@
                                 <span class="badge bg-light text-dark"><?= count($roleData['courses']) ?> course(s)</span>
                             </div>
                             <div class="card-body">
+                                <!-- Search Form -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <form id="adminCourseSearchForm" class="d-flex">
+                                            <div class="input-group">
+                                                <input type="text" 
+                                                       id="adminCourseSearchInput" 
+                                                       class="form-control" 
+                                                       placeholder="Search courses..." 
+                                                       name="search_term">
+                                                <button class="btn btn-outline-primary" type="submit">
+                                                    <i class="bi bi-search"></i> Search
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
                                 <?php if (empty($roleData['courses'])): ?>
                                     <div class="alert alert-info">
                                         <i class="bi bi-info-circle"></i> No courses found. <a href="<?= base_url('admin/create-course') ?>" class="alert-link">Create your first course</a>.
@@ -629,9 +646,9 @@
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody id="adminCoursesTableBody">
                                                 <?php foreach ($roleData['courses'] as $course): ?>
-                                                    <tr>
+                                                    <tr class="admin-course-row">
                                                         <td>#<?= esc($course['id']) ?></td>
                                                         <td>
                                                             <strong><?= esc($course['title']) ?></strong>
@@ -698,6 +715,102 @@
                         </div>
                     </div>
                 </div>
+
+            <?php endif; ?>
+            
+            <!-- Admin Course Search Script -->
+            <?php if ($user['role'] === 'admin' && isset($roleData['courses']) && !empty($roleData['courses'])): ?>
+            <script>
+            // Ensure this runs after jQuery and DOM are ready
+            if (typeof jQuery !== 'undefined') {
+                jQuery(document).ready(function($) {
+                    // Auto-filtering as user types (Instant Search)
+                    function filterAdminCourses() {
+                        var searchValue = $('#adminCourseSearchInput').val().toLowerCase().trim();
+                        
+                        // Remove previous no results message
+                        $('#adminNoResultsMessage').remove();
+                        
+                        // Filter course rows
+                        var hasVisibleRows = false;
+                        $('.admin-course-row').each(function() {
+                            var $row = $(this);
+                            var rowText = $row.text().toLowerCase();
+                            
+                            if (rowText.indexOf(searchValue) > -1) {
+                                $row.show();
+                                hasVisibleRows = true;
+                            } else {
+                                $row.hide();
+                            }
+                        });
+                        
+                        // Show message if no results and search has value
+                        if (searchValue !== '' && !hasVisibleRows) {
+                            $('#adminCoursesTableBody').append(
+                                '<tr id="adminNoResultsMessage">' +
+                                '<td colspan="7" class="text-center py-3">' +
+                                '<div class="alert alert-info mb-0">' +
+                                '<i class="bi bi-info-circle"></i> No courses found matching your search.' +
+                                '</div>' +
+                                '</td>' +
+                                '</tr>'
+                            );
+                        }
+                    }
+                    
+                    // Bind events for auto-filtering
+                    $(document).on('keyup input paste', '#adminCourseSearchInput', filterAdminCourses);
+                    
+                    // Prevent form submission - just use auto-filtering
+                    $(document).on('submit', '#adminCourseSearchForm', function(e) {
+                        e.preventDefault();
+                        filterAdminCourses();
+                        return false;
+                    });
+                });
+            } else {
+                // Fallback if jQuery loads later
+                window.addEventListener('load', function() {
+                    if (typeof jQuery !== 'undefined') {
+                        jQuery(document).ready(function($) {
+                            function filterAdminCourses() {
+                                var searchValue = $('#adminCourseSearchInput').val().toLowerCase().trim();
+                                $('#adminNoResultsMessage').remove();
+                                var hasVisibleRows = false;
+                                $('.admin-course-row').each(function() {
+                                    var $row = $(this);
+                                    var rowText = $row.text().toLowerCase();
+                                    if (rowText.indexOf(searchValue) > -1) {
+                                        $row.show();
+                                        hasVisibleRows = true;
+                                    } else {
+                                        $row.hide();
+                                    }
+                                });
+                                if (searchValue !== '' && !hasVisibleRows) {
+                                    $('#adminCoursesTableBody').append(
+                                        '<tr id="adminNoResultsMessage">' +
+                                        '<td colspan="7" class="text-center py-3">' +
+                                        '<div class="alert alert-info mb-0">' +
+                                        '<i class="bi bi-info-circle"></i> No courses found matching your search.' +
+                                        '</div>' +
+                                        '</td>' +
+                                        '</tr>'
+                                    );
+                                }
+                            }
+                            $(document).on('keyup input paste', '#adminCourseSearchInput', filterAdminCourses);
+                            $(document).on('submit', '#adminCourseSearchForm', function(e) {
+                                e.preventDefault();
+                                filterAdminCourses();
+                                return false;
+                            });
+                        });
+                    }
+                });
+            }
+            </script>
             <?php endif; ?>
         </div>
     </div>

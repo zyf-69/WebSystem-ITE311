@@ -18,14 +18,32 @@
                 </div>
             <?php endif; ?>
 
+            <!-- Search Form -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form id="searchForm" class="d-flex">
+                        <div class="input-group">
+                            <input type="text" 
+                                   id="searchInput" 
+                                   class="form-control" 
+                                   placeholder="Search courses..." 
+                                   name="search_term">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <?php if (empty($courses)): ?>
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i> No courses assigned to you yet. Please contact an administrator.
                 </div>
             <?php else: ?>
-                <div class="row">
+                <div class="row" id="coursesContainer">
                     <?php foreach ($courses as $course): ?>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-4 course-card">
                             <div class="card h-100">
                                 <div class="card-header bg-success text-white">
                                     <h5 class="card-title mb-0">
@@ -117,5 +135,96 @@
         </div>
     </div>
 </div>
+
+<!-- Search Script -->
+<script>
+// Ensure this runs after jQuery and DOM are ready
+if (typeof jQuery !== 'undefined') {
+    jQuery(document).ready(function($) {
+        // Auto-filtering as user types (Instant Search)
+        function filterTeacherCourses() {
+            var searchValue = $('#searchInput').val().toLowerCase().trim();
+            
+            // Remove previous no results message
+            $('#noResultsMessage').remove();
+            
+            // Filter course cards
+            var hasVisibleCards = false;
+            $('.course-card').each(function() {
+                var $card = $(this);
+                var $container = $card.closest('.col-md-6');
+                var cardText = $card.text().toLowerCase();
+                
+                if (cardText.indexOf(searchValue) > -1) {
+                    $container.show();
+                    hasVisibleCards = true;
+                } else {
+                    $container.hide();
+                }
+            });
+            
+            // Show message if no results and search has value
+            if (searchValue !== '' && !hasVisibleCards) {
+                $('#coursesContainer').append(
+                    '<div class="col-12" id="noResultsMessage">' +
+                    '<div class="alert alert-info">' +
+                    '<i class="bi bi-info-circle"></i> No courses found matching your search.' +
+                    '</div>' +
+                    '</div>'
+                );
+            }
+        }
+        
+        // Bind events for auto-filtering using event delegation
+        $(document).on('keyup input paste', '#searchInput', filterTeacherCourses);
+        
+        // Prevent form submission - just use auto-filtering
+        $(document).on('submit', '#searchForm', function(e) {
+            e.preventDefault();
+            filterTeacherCourses();
+            return false;
+        });
+    });
+} else {
+    // Fallback if jQuery loads later
+    window.addEventListener('load', function() {
+        if (typeof jQuery !== 'undefined') {
+            jQuery(document).ready(function($) {
+                function filterTeacherCourses() {
+                    var searchValue = $('#searchInput').val().toLowerCase().trim();
+                    $('#noResultsMessage').remove();
+                    var hasVisibleCards = false;
+                    $('.course-card').each(function() {
+                        var $card = $(this);
+                        var $container = $card.closest('.col-md-6');
+                        var cardText = $card.text().toLowerCase();
+                        if (cardText.indexOf(searchValue) > -1) {
+                            $container.show();
+                            hasVisibleCards = true;
+                        } else {
+                            $container.hide();
+                        }
+                    });
+                    if (searchValue !== '' && !hasVisibleCards) {
+                        $('#coursesContainer').append(
+                            '<div class="col-12" id="noResultsMessage">' +
+                            '<div class="alert alert-info">' +
+                            '<i class="bi bi-info-circle"></i> No courses found matching your search.' +
+                            '</div>' +
+                            '</div>'
+                        );
+                    }
+                }
+                $(document).on('keyup input paste', '#searchInput', filterTeacherCourses);
+                $(document).on('submit', '#searchForm', function(e) {
+                    e.preventDefault();
+                    filterTeacherCourses();
+                    return false;
+                });
+            });
+        }
+    });
+}
+</script>
 <?= $this->endSection() ?>
 

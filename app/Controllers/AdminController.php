@@ -42,7 +42,7 @@ class AdminController extends Controller
             if ($userRole === 'teacher') {
                 return redirect()->to('/teacher/dashboard');
             } elseif ($userRole === 'student') {
-                return redirect()->to('/student/dashboard');
+                return redirect()->to('/dashboard');
             } else {
                 return redirect()->to('/announcements');
             }

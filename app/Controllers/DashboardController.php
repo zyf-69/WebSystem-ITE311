@@ -47,7 +47,7 @@ class DashboardController extends Controller
         if ($role === 'admin') {
             return redirect()->to('/admin/dashboard');
         } else {
-            return redirect()->to('/student/dashboard');
+            return redirect()->to('/dashboard');
         }
     }
 
@@ -74,46 +74,12 @@ class DashboardController extends Controller
 
     /**
      * Student Dashboard
-     * Only accessible by users with student role
+     * Redirects to unified dashboard
      */
     public function studentDashboard()
     {
-        $user_id = $this->session->get('user_id');
-        
-        // Get enrolled courses
-        $enrolledCourses = $this->enrollmentModel->getUserEnrollments($user_id);
-
-        // Attach materials per enrolled course
-        foreach ($enrolledCourses as &$enrollment) {
-            $enrollment['materials'] = $this->materialModel->getMaterialsByCourse($enrollment['course_id']);
-        }
-        unset($enrollment);
-        
-        // Get all available courses
-        $allCourses = $this->courseModel->getAllCourses();
-        
-        // Get enrolled course IDs to filter available courses
-        $enrolledCourseIds = array_column($enrolledCourses, 'course_id');
-        
-        // Filter out already enrolled courses
-        $availableCourses = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
-            return !in_array($course['id'], $enrolledCourseIds);
-        });
-        
-        // Prepare data for student dashboard
-        $data = [
-            'title' => 'Student Dashboard',
-            'user' => [
-                'id' => $this->session->get('user_id'),
-                'name' => $this->session->get('user_name'),
-                'email' => $this->session->get('user_email'),
-                'role' => $this->session->get('role'),
-            ],
-            'enrolledCourses' => $enrolledCourses,
-            'availableCourses' => $availableCourses,
-        ];
-
-        return view('dashboard/student', $data);
+        // Redirect to unified dashboard
+        return redirect()->to('/dashboard');
     }
 
     /**

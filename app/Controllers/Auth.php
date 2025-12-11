@@ -221,16 +221,27 @@ class Auth extends Controller
             }
             unset($enrollment);
             
-            // Get all enrollments (including pending) to filter available courses
+            // Get all enrollments to filter available courses
             $allEnrollments = $enrollmentModel->getUserEnrollments($userData['id']);
-            $enrolledCourseIds = array_column($allEnrollments, 'course_id');
+            
+            // Get course IDs where student is enrolled or has pending enrollment (exclude declined)
+            $excludedCourseIds = [];
+            foreach ($allEnrollments as $enrollment) {
+                $status = $enrollment['status'] ?? 'pending';
+                // Only exclude courses where status is 'enrolled' or 'pending'
+                // Allow 'declined' courses to show up so students can re-enroll
+                if ($status === 'enrolled' || $status === 'pending') {
+                    $excludedCourseIds[] = $enrollment['course_id'];
+                }
+            }
             
             // Get all available courses
             $allCourses = $courseModel->getAllCourses();
             
-            // Filter out courses that student is already enrolled in or has pending enrollment
-            $availableCourses = array_filter($allCourses, function($course) use ($enrolledCourseIds) {
-                return !in_array($course['id'], $enrolledCourseIds);
+            // Filter out courses that student is enrolled in or has pending enrollment
+            // But allow declined courses to show up
+            $availableCourses = array_filter($allCourses, function($course) use ($excludedCourseIds) {
+                return !in_array($course['id'], $excludedCourseIds);
             });
             
             // Get pending enrollments
@@ -305,11 +316,18 @@ class Auth extends Controller
             return view('teacher/my_courses', $data);
             
         } elseif ($userRole === 'student') {
-            // For students: show enrolled courses
+            // For students: show enrolled courses with materials
             $enrollmentModel = new \App\Models\EnrollmentModel();
+            $materialModel = new \App\Models\MaterialModel();
             
             // Get enrolled courses (status = 'enrolled')
             $enrolledCourses = $enrollmentModel->getUserEnrollments($userId, 'enrolled');
+            
+            // Attach materials to each enrolled course
+            foreach ($enrolledCourses as &$enrollment) {
+                $enrollment['materials'] = $materialModel->getMaterialsByCourse($enrollment['course_id']);
+            }
+            unset($enrollment);
             
             // Get pending enrollments
             $pendingEnrollments = $enrollmentModel->getUserEnrollments($userId, 'pending');

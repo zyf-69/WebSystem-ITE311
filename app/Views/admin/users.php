@@ -33,11 +33,12 @@
             <!-- Search Box -->
             <div class="card mb-3">
                 <div class="card-body">
-                    <form method="get" action="<?= base_url('admin/users') ?>" class="row g-3">
+                    <form id="userSearchForm" class="row g-3">
                         <div class="col-md-10">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" 
+                                       id="userSearchInput"
                                        class="form-control" 
                                        name="search" 
                                        placeholder="Search users by name or email..." 
@@ -49,14 +50,6 @@
                                 <i class="bi bi-search"></i> Search
                             </button>
                         </div>
-                        <?php if (!empty($search)): ?>
-                            <div class="col-12">
-                                <a href="<?= base_url('admin/users') ?>" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-x-circle"></i> Clear Search
-                                </a>
-                                <span class="ms-2 text-muted">Search results for: "<strong><?= esc($search) ?></strong>"</span>
-                            </div>
-                        <?php endif; ?>
                     </form>
                 </div>
             </div>
@@ -91,10 +84,13 @@
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="usersTableBody">
                                     <?php foreach ($users as $u): ?>
                                         <?php $isDeleted = !empty($u['deleted_at']); ?>
-                                        <tr class="<?= $isDeleted ? 'table-secondary opacity-75' : '' ?>">
+                                        <tr class="user-row <?= $isDeleted ? 'table-secondary opacity-75' : '' ?>" 
+                                            data-user-name="<?= strtolower(esc($u['name'])) ?>" 
+                                            data-user-email="<?= strtolower(esc($u['email'])) ?>"
+                                            data-user-role="<?= strtolower(esc($u['role'])) ?>">
                                             <td>#<?= $u['id'] ?></td>
                                             <td>
                                                 <?= esc($u['name']) ?>
@@ -207,4 +203,115 @@
         </div>
     </div>
 </div>
+
+<!-- User Search Script -->
+<script>
+// Ensure this runs after jQuery and DOM are ready
+if (typeof jQuery !== 'undefined') {
+    jQuery(document).ready(function($) {
+        // Auto-filtering as user types (Instant Search)
+        function filterUsers() {
+            var searchValue = $('#userSearchInput').val().toLowerCase().trim();
+            
+            // Remove previous no results message
+            $('#usersNoResultsMessage').remove();
+            
+            // Filter user rows
+            var hasVisibleRows = false;
+            $('.user-row').each(function() {
+                var $row = $(this);
+                var userName = $row.data('user-name') || '';
+                var userEmail = $row.data('user-email') || '';
+                var userRole = $row.data('user-role') || '';
+                
+                // Search in name, email, and role
+                var match = userName.indexOf(searchValue) > -1 || 
+                           userEmail.indexOf(searchValue) > -1 || 
+                           userRole.indexOf(searchValue) > -1;
+                
+                if (match) {
+                    $row.show();
+                    hasVisibleRows = true;
+                } else {
+                    $row.hide();
+                }
+            });
+            
+            // Show message if no results and search has value
+            var $tbody = $('#usersTableBody');
+            if (searchValue !== '' && !hasVisibleRows) {
+                if ($tbody.find('#usersNoResultsMessage').length === 0) {
+                    $tbody.append(
+                        '<tr id="usersNoResultsMessage">' +
+                        '<td colspan="7" class="text-center py-4">' +
+                        '<div class="alert alert-info mb-0">' +
+                        '<i class="bi bi-info-circle"></i> No users found matching your search.' +
+                        '</div>' +
+                        '</td>' +
+                        '</tr>'
+                    );
+                }
+            }
+        }
+        
+        // Bind events for auto-filtering using event delegation
+        $(document).on('keyup input paste', '#userSearchInput', filterUsers);
+        
+        // Prevent form submission - just use auto-filtering
+        $(document).on('submit', '#userSearchForm', function(e) {
+            e.preventDefault();
+            filterUsers();
+            return false;
+        });
+    });
+} else {
+    // Fallback if jQuery loads later
+    window.addEventListener('load', function() {
+        if (typeof jQuery !== 'undefined') {
+            jQuery(document).ready(function($) {
+                function filterUsers() {
+                    var searchValue = $('#userSearchInput').val().toLowerCase().trim();
+                    $('#usersNoResultsMessage').remove();
+                    var hasVisibleRows = false;
+                    $('.user-row').each(function() {
+                        var $row = $(this);
+                        var userName = $row.data('user-name') || '';
+                        var userEmail = $row.data('user-email') || '';
+                        var userRole = $row.data('user-role') || '';
+                        var match = userName.indexOf(searchValue) > -1 || 
+                                   userEmail.indexOf(searchValue) > -1 || 
+                                   userRole.indexOf(searchValue) > -1;
+                        if (match) {
+                            $row.show();
+                            hasVisibleRows = true;
+                        } else {
+                            $row.hide();
+                        }
+                    });
+                    var $tbody = $('#usersTableBody');
+                    if (searchValue !== '' && !hasVisibleRows) {
+                        if ($tbody.find('#usersNoResultsMessage').length === 0) {
+                            $tbody.append(
+                                '<tr id="usersNoResultsMessage">' +
+                                '<td colspan="7" class="text-center py-4">' +
+                                '<div class="alert alert-info mb-0">' +
+                                '<i class="bi bi-info-circle"></i> No users found matching your search.' +
+                                '</div>' +
+                                '</td>' +
+                                '</tr>'
+                            );
+                        }
+                    }
+                }
+                $(document).on('keyup input paste', '#userSearchInput', filterUsers);
+                $(document).on('submit', '#userSearchForm', function(e) {
+                    e.preventDefault();
+                    filterUsers();
+                    return false;
+                });
+            });
+        }
+    });
+}
+</script>
 <?= $this->endSection() ?>
