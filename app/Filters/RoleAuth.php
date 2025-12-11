@@ -99,6 +99,8 @@ class RoleAuth implements FilterInterface
                 // - /my-students route (simplified URL for My Students)
                 // - Dashboard and announcements
                 // - Course enrollment route
+                // - Course upload routes (for materials)
+                // - Materials routes (download, delete)
                 // - Empty path (home)
                 // Check first segment
                 if (empty($path) || 
@@ -107,7 +109,8 @@ class RoleAuth implements FilterInterface
                     $firstSegment === 'my-students' ||
                     $firstSegment === 'dashboard' || 
                     $firstSegment === 'announcements' ||
-                    ($firstSegment === 'course' && isset($pathSegments[1]) && $pathSegments[1] === 'enroll') ||
+                    $firstSegment === 'materials' ||
+                    ($firstSegment === 'course' && (isset($pathSegments[1]) && ($pathSegments[1] === 'enroll' || $pathSegments[1] === 'upload' || is_numeric($pathSegments[1])))) ||
                     $pathWithSlash === '/' ||
                     $pathWithSlash === '/home') {
                     return; // Allow access
@@ -118,7 +121,9 @@ class RoleAuth implements FilterInterface
                     strpos($pathWithSlash, '/my-students') === 0 ||
                     strpos($pathWithSlash, '/dashboard') === 0 || 
                     strpos($pathWithSlash, '/announcements') === 0 ||
-                    strpos($pathWithSlash, '/course/enroll') === 0) {
+                    strpos($pathWithSlash, '/course/enroll') === 0 ||
+                    strpos($pathWithSlash, '/course/') === 0 ||
+                    strpos($pathWithSlash, '/materials/') === 0) {
                     return; // Allow access
                 }
                 // Check raw path (without leading slash) for additional safety
@@ -127,7 +132,9 @@ class RoleAuth implements FilterInterface
                     strpos($path, 'my-students') === 0 ||
                     strpos($path, 'dashboard') === 0 || 
                     strpos($path, 'announcements') === 0 ||
-                    strpos($path, 'course/enroll') === 0) {
+                    strpos($path, 'course/enroll') === 0 ||
+                    strpos($path, 'course/') === 0 ||
+                    strpos($path, 'materials/') === 0) {
                     return; // Allow access
                 }
                 // Final check - if path contains these keywords (handles base path issues)
@@ -135,7 +142,9 @@ class RoleAuth implements FilterInterface
                     strpos($rawPath, 'dashboard') !== false ||
                     strpos($rawPath, 'teacher') !== false ||
                     strpos($rawPath, 'my-course') !== false ||
-                    strpos($rawPath, 'my-students') !== false) {
+                    strpos($rawPath, 'my-students') !== false ||
+                    strpos($rawPath, 'course/') !== false ||
+                    strpos($rawPath, 'materials/') !== false) {
                     return; // Allow access
                 }
                 break;

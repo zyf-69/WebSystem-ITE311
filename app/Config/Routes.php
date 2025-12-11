@@ -83,3 +83,11 @@ $routes->group('teacher', ['filter' => 'roleauth'], function($routes) {
 $routes->group('student', ['filter' => 'roleauth'], function($routes) {
     $routes->get('dashboard', 'DashboardController::studentDashboard');
 });
+
+// Materials routes - allow authenticated users (permission checked in controller)
+$routes->get('course/(:num)/upload', 'Materials::upload/$1', ['filter' => 'auth']);
+$routes->post('course/(:num)/upload', 'Materials::upload/$1', ['filter' => 'auth']);
+$routes->get('/admin/course/(:num)/upload', 'Materials::upload/$1', ['filter' => 'auth']);
+$routes->post('/admin/course/(:num)/upload', 'Materials::upload/$1', ['filter' => 'auth']);
+$routes->get('/materials/delete/(:num)', 'Materials::delete/$1', ['filter' => 'roleauth']);
+$routes->get('/materials/download/(:num)', 'Materials::download/$1', ['filter' => 'auth']);

@@ -68,7 +68,10 @@ class Teacher extends Controller
         // Get courses assigned to this teacher
         $courses = $this->courseModel->where('instructor_id', $teacherId)->findAll();
         
-        // Get enrollment counts for each course
+        // Load MaterialModel to get materials for each course
+        $materialModel = new \App\Models\MaterialModel();
+        
+        // Get enrollment counts and materials for each course
         foreach ($courses as &$course) {
             $enrollments = $this->enrollmentModel->where('course_id', $course['id'])->findAll();
             $course['total_students'] = count($enrollments);
@@ -78,6 +81,8 @@ class Teacher extends Controller
             $course['enrolled_count'] = count(array_filter($enrollments, function($e) {
                 return ($e['status'] ?? '') === 'enrolled';
             }));
+            // Get materials for this course
+            $course['materials'] = $materialModel->getMaterialsByCourse($course['id']);
         }
         unset($course);
         

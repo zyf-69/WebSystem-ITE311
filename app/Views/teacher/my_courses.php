@@ -69,6 +69,24 @@
                                     <?php endif; ?>
                                 </div>
                                 <div class="card-footer bg-light">
+                                    <div class="mb-2">
+                                        <strong>Course Materials:</strong>
+                                        <?php if (empty($course['materials'])): ?>
+                                            <div class="text-muted small">No materials uploaded yet.</div>
+                                        <?php else: ?>
+                                            <ul class="list-unstyled mb-0 small">
+                                                <?php foreach ($course['materials'] as $material): ?>
+                                                    <li class="d-flex align-items-center mb-1">
+                                                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                                        <span class="flex-grow-1"><?= esc($material['file_name']) ?></span>
+                                                        <a class="btn btn-sm btn-outline-primary" href="<?= base_url('materials/download/' . $material['id']) ?>">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <small class="text-muted">
@@ -81,9 +99,14 @@
                                                 <?php endif; ?>
                                             </small>
                                         </div>
-                                        <a href="<?= base_url('my-students') ?>" class="btn btn-sm btn-primary">
-                                            <i class="bi bi-people"></i> View Students
-                                        </a>
+                                        <div class="btn-group">
+                                            <a href="<?= base_url('course/' . $course['id'] . '/upload') ?>" class="btn btn-sm btn-warning">
+                                                <i class="bi bi-upload"></i> Upload Materials
+                                            </a>
+                                            <a href="<?= base_url('my-students') ?>" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-people"></i> View Students
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

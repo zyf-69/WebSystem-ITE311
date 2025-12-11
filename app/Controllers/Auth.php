@@ -210,9 +210,16 @@ class Auth extends Controller
             // Fetch student-specific data
             $enrollmentModel = new \App\Models\EnrollmentModel();
             $courseModel = new \App\Models\CourseModel();
+            $materialModel = new \App\Models\MaterialModel();
             
             // Get enrolled courses (status = 'enrolled')
             $enrolledCourses = $enrollmentModel->getUserEnrollments($userData['id'], 'enrolled');
+            
+            // Attach materials to each enrolled course
+            foreach ($enrolledCourses as &$enrollment) {
+                $enrollment['materials'] = $materialModel->getMaterialsByCourse($enrollment['course_id']);
+            }
+            unset($enrollment);
             
             // Get all enrollments (including pending) to filter available courses
             $allEnrollments = $enrollmentModel->getUserEnrollments($userData['id']);

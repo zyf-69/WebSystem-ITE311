@@ -388,6 +388,24 @@
                                                             <i class="bi bi-calendar-check"></i> 
                                                             Enrolled: <?= date('M d, Y', strtotime($enrollment['enrollment_date'] ?? $enrollment['created_at'])) ?>
                                                         </small>
+                                                        <div class="mt-2">
+                                                            <strong>Materials:</strong>
+                                                            <?php if (empty($enrollment['materials'])): ?>
+                                                                <div class="text-muted small">No materials uploaded yet.</div>
+                                                            <?php else: ?>
+                                                                <ul class="list-unstyled mb-0 small">
+                                                                    <?php foreach ($enrollment['materials'] as $material): ?>
+                                                                        <li class="d-flex align-items-center mb-1">
+                                                                            <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                                                            <span class="flex-grow-1"><?= esc($material['file_name']) ?></span>
+                                                                            <a class="btn btn-sm btn-outline-primary" href="<?= base_url('materials/download/' . $material['id']) ?>">
+                                                                                <i class="bi bi-download"></i> Download
+                                                                            </a>
+                                                                        </li>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            <?php endif; ?>
+                                                        </div>
                                                     </div>
                                                     <div>
                                                         <span class="badge bg-success">Enrolled</span>
@@ -598,6 +616,9 @@
                                                                 <a href="<?= base_url('admin/edit-course/' . $course['id']) ?>" class="btn btn-sm btn-primary" title="Edit Course">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </a>
+                                                                <a href="<?= base_url('course/' . $course['id'] . '/upload') ?>" class="btn btn-sm btn-warning" title="Attach File to Course">
+                                                                    <i class="bi bi-upload"></i>
+                                                                </a>
                                                                 <a href="<?= base_url('admin/delete-course/' . $course['id']) ?>" 
                                                                    class="btn btn-sm btn-danger" 
                                                                    title="Delete Course"
@@ -620,4 +641,6 @@
         </div>
     </div>
 </div>
+
+
 <?= $this->endSection() ?>
