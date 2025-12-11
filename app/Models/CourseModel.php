@@ -16,6 +16,11 @@ class CourseModel extends Model
         'title',
         'description',
         'instructor_id',
+        'start_time',
+        'end_time',
+        'schedule_days',
+        'room',
+        'status',
         'created_at',
         'updated_at'
     ];
