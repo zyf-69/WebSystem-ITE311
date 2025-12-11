@@ -60,10 +60,29 @@ class EnrollmentModel extends Model
     public function getUserEnrollments($user_id, $status = null)
     {
         $db = \Config\Database::connect();
-        
+
         // Join with courses table to get course details
         $builder = $db->table('enrollments');
-        $builder->select('enrollments.*, courses.id as course_id, courses.title, courses.description, courses.instructor_id, courses.level, courses.start_time, courses.end_time, courses.schedule_days, courses.room, courses.status as course_status');
+
+        // Build select dynamically to avoid selecting columns that may not exist
+        $selectFields = ['enrollments.*', 'courses.id as course_id', 'courses.title', 'courses.description', 'courses.instructor_id'];
+
+        // Check and add optional course fields if they exist
+        $optionalFields = [
+            'start_time' => 'courses.start_time',
+            'end_time' => 'courses.end_time',
+            'schedule_days' => 'courses.schedule_days',
+            'room' => 'courses.room',
+            'status' => 'courses.status as course_status'
+        ];
+
+        foreach ($optionalFields as $field => $select) {
+            if ($db->fieldExists($field, 'courses')) {
+                $selectFields[] = $select;
+            }
+        }
+
+        $builder->select(implode(', ', $selectFields));
         $builder->join('courses', 'courses.id = enrollments.course_id', 'left');
         
         // Check both user_id and student_id for compatibility

@@ -32,8 +32,13 @@
                 <?= csrf_field() ?>
                 <div class="mb-3">
                     <label for="material" class="form-label">Select File <span class="text-danger">*</span></label>
-                    <input type="file" class="form-control" id="material" name="material" required accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.png,.jpg,.jpeg,.mp4,.mp3">
+                    <input type="file" class="form-control <?= isset($validation) && $validation->hasError('material') ? 'is-invalid' : '' ?>" id="material" name="material" required accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.png,.jpg,.jpeg,.mp4,.mp3">
                     <div class="form-text">Allowed: pdf, doc, docx, ppt, pptx, zip, rar, txt, png, jpg, jpeg, mp4, mp3. Max 20MB.</div>
+                    <?php if (isset($validation) && $validation->hasError('material')): ?>
+                        <div class="invalid-feedback d-block">
+                            <?= $validation->getError('material') ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-upload"></i> Upload

@@ -115,6 +115,9 @@
                                         <a href="<?= base_url('admin/create-user') ?>" class="btn btn-success">
                                             <i class="bi bi-person-plus"></i> Create New User
                                         </a>
+                                        <a href="<?= base_url('course/1/upload') ?>" class="btn btn-warning">
+                                            <i class="bi bi-upload"></i> Attach File to Course
+                                        </a>
                                         <a href="#" class="btn btn-outline-primary">
                                             <i class="bi bi-gear"></i> System Settings
                                         </a>

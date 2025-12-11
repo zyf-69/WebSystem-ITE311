@@ -102,6 +102,24 @@
                                                         <i class="bi bi-calendar-check"></i> 
                                                         Enrolled: <?= date('M d, Y', strtotime($enrollment['enrollment_date'] ?? $enrollment['created_at'])) ?>
                                                     </small>
+                                                    <div class="mt-2">
+                                                        <strong>Materials:</strong>
+                                                        <?php if (empty($enrollment['materials'])): ?>
+                                                            <div class="text-muted small">No materials uploaded yet.</div>
+                                                        <?php else: ?>
+                                                            <ul class="list-unstyled mb-0">
+                                                                <?php foreach ($enrollment['materials'] as $material): ?>
+                                                                    <li class="small d-flex align-items-center mb-1">
+                                                                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                                                        <span class="flex-grow-1"><?= esc($material['file_name']) ?></span>
+                                                                        <a class="btn btn-sm btn-outline-primary" href="<?= base_url('materials/download/' . $material['id']) ?>">
+                                                                            <i class="bi bi-download"></i> Download
+                                                                        </a>
+                                                                    </li>
+                                                                <?php endforeach; ?>
+                                                            </ul>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </div>
                                                 <div>
                                                     <a href="#" class="btn btn-sm btn-primary">

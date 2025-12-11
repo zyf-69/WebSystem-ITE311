@@ -37,71 +37,95 @@ class Materials extends Controller
 
         helper(['form']);
 
-        if ($this->request->getMethod() === 'post') {
+        // Check if POST request (case insensitive)
+        if (strtolower($this->request->getMethod()) === 'post') {
             $file = $this->request->getFile('material');
             
-            // Check if file was uploaded
-            if (!$file || !$file->isValid()) {
-                $this->session->setFlashdata('error', 'No file was uploaded or file is invalid.');
+            // Debug: Check if file was actually uploaded
+            if (!$file) {
+                $this->session->setFlashdata('error', 'No file was selected. Please choose a file to upload.');
+                return redirect()->to('/course/' . $courseId . '/upload');
+            }
+            
+            // Check if file is valid
+            if (!$file->isValid()) {
+                $errorCode = $file->getError();
+                $errorMessages = [
+                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize directive.',
+                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive.',
+                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded.',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder.',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
+                    UPLOAD_ERR_EXTENSION => 'File upload stopped by extension.',
+                ];
+                $errorMsg = $errorMessages[$errorCode] ?? 'File upload error: ' . $errorCode;
+                $this->session->setFlashdata('error', $errorMsg);
                 return redirect()->to('/course/' . $courseId . '/upload');
             }
 
-            $validationRules = [
-                'material' => [
-                    'rules' => 'uploaded[material]|max_size[material,20480]|ext_in[material,pdf,doc,docx,ppt,pptx,zip,rar,txt,png,jpg,jpeg,mp4,mp3]',
-                    'errors' => [
-                        'uploaded' => 'Please choose a file to upload.',
-                        'max_size' => 'File must be less than 20MB.',
-                        'ext_in'   => 'Invalid file type. Allowed: pdf, doc, docx, ppt, pptx, zip, rar, txt, png, jpg, jpeg, mp4, mp3',
-                    ],
-                ],
-            ];
+            // Get file extension
+            $extension = $file->getClientExtension();
+            $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'rar', 'txt', 'png', 'jpg', 'jpeg', 'mp4', 'mp3'];
+            
+            // Validate file size (20MB = 20480 KB)
+            if ($file->getSize() > 20480 * 1024) {
+                $this->session->setFlashdata('error', 'File must be less than 20MB.');
+                return redirect()->to('/course/' . $courseId . '/upload');
+            }
+            
+            // Validate file extension
+            if (!in_array(strtolower($extension), $allowedExtensions)) {
+                $this->session->setFlashdata('error', 'Invalid file type. Allowed: ' . implode(', ', $allowedExtensions));
+                return redirect()->to('/course/' . $courseId . '/upload');
+            }
+            
+            // If we get here, file is valid - proceed with upload
 
-            if ($this->validate($validationRules)) {
-                $uploadDir = rtrim(WRITEPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'materials';
+            $uploadDir = rtrim(WRITEPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'materials';
 
-                // Create directory if it doesn't exist
-                if (!is_dir($uploadDir)) {
-                    if (!mkdir($uploadDir, 0755, true)) {
-                        $this->session->setFlashdata('error', 'Failed to create upload directory.');
-                        return redirect()->to('/course/' . $courseId . '/upload');
-                    }
+            // Create directory if it doesn't exist
+            if (!is_dir($uploadDir)) {
+                if (!mkdir($uploadDir, 0755, true)) {
+                    $this->session->setFlashdata('error', 'Failed to create upload directory.');
+                    return redirect()->to('/course/' . $courseId . '/upload');
                 }
+            }
 
-                // Check if directory is writable
+            // Check if directory is writable
+            if (!is_writable($uploadDir)) {
+                chmod($uploadDir, 0755);
                 if (!is_writable($uploadDir)) {
-                    chmod($uploadDir, 0755);
+                    $this->session->setFlashdata('error', 'Upload directory is not writable. Please check permissions.');
+                    return redirect()->to('/course/' . $courseId . '/upload');
                 }
+            }
 
-                $newName = $file->getRandomName();
+            $newName = $file->getRandomName();
 
-                if ($file->move($uploadDir, $newName)) {
-                    $data = [
-                        'course_id' => $courseId,
-                        'file_name' => $file->getClientName(),
-                        'file_path' => 'uploads/materials/' . $newName,
-                        'created_at' => date('Y-m-d H:i:s'),
-                    ];
+            if ($file->move($uploadDir, $newName)) {
+                $data = [
+                    'course_id' => $courseId,
+                    'file_name' => $file->getClientName(),
+                    'file_path' => 'uploads/materials/' . $newName,
+                    'created_at' => date('Y-m-d H:i:s'),
+                ];
 
-                    if ($this->materialModel->insertMaterial($data)) {
-                        $this->session->setFlashdata('success', 'Material uploaded successfully.');
-                        return redirect()->to('/course/' . $courseId . '/upload');
-                    } else {
-                        // Delete uploaded file if database insert failed
-                        @unlink($uploadDir . DIRECTORY_SEPARATOR . $newName);
-                        $this->session->setFlashdata('error', 'Failed to save material information to database.');
-                        return redirect()->to('/course/' . $courseId . '/upload');
-                    }
+                $insertId = $this->materialModel->insert($data);
+                if ($insertId) {
+                    $this->session->setFlashdata('success', 'Material uploaded successfully and saved to database.');
+                    return redirect()->to('/course/' . $courseId . '/upload');
                 } else {
-                    $errors = $file->getErrorString();
-                    $this->session->setFlashdata('error', 'Failed to upload file: ' . $errors);
+                    // Delete uploaded file if database insert failed
+                    @unlink($uploadDir . DIRECTORY_SEPARATOR . $newName);
+                    $errors = $this->materialModel->errors();
+                    $errorMsg = !empty($errors) ? implode(', ', $errors) : 'Failed to save material information to database.';
+                    $this->session->setFlashdata('error', $errorMsg);
                     return redirect()->to('/course/' . $courseId . '/upload');
                 }
             } else {
-                // Get all validation errors
-                $errors = $this->validator->getErrors();
-                $errorMessage = !empty($errors) ? implode(', ', $errors) : 'Validation failed.';
-                $this->session->setFlashdata('error', $errorMessage);
+                $errors = $file->getErrorString();
+                $this->session->setFlashdata('error', 'Failed to upload file: ' . $errors);
                 return redirect()->to('/course/' . $courseId . '/upload');
             }
         }
@@ -112,6 +136,7 @@ class Materials extends Controller
             'title' => 'Upload Course Materials',
             'course' => $course,
             'materials' => $materials,
+            'validation' => $this->validator,
         ];
 
         return view('admin/material_upload', $data);
@@ -158,12 +183,15 @@ class Materials extends Controller
 
         $isAdmin = ($role === 'admin');
         $isInstructor = ($role === 'teacher' && $course && (int) ($course['instructor_id'] ?? 0) === (int) $userId);
+        
+        // Check if student is enrolled (status = 'enrolled')
         $isEnrolled = $this->enrollmentModel
             ->groupStart()
             ->where('user_id', $userId)
             ->orWhere('student_id', $userId)
             ->groupEnd()
             ->where('course_id', $material['course_id'])
+            ->where('status', 'enrolled')
             ->countAllResults() > 0;
 
         if (!($isAdmin || $isInstructor || $isEnrolled)) {

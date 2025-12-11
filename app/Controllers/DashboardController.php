@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Models\EnrollmentModel;
 use App\Models\CourseModel;
+use App\Models\MaterialModel;
 use CodeIgniter\Controller;
 
 /**
@@ -16,6 +17,7 @@ class DashboardController extends Controller
     protected $userModel;
     protected $enrollmentModel;
     protected $courseModel;
+    protected $materialModel;
     protected $session;
 
     public function __construct()
@@ -23,6 +25,7 @@ class DashboardController extends Controller
         $this->userModel = new UserModel();
         $this->enrollmentModel = new EnrollmentModel();
         $this->courseModel = new CourseModel();
+        $this->materialModel = new MaterialModel();
         $this->session = session();
     }
 
@@ -79,6 +82,12 @@ class DashboardController extends Controller
         
         // Get enrolled courses
         $enrolledCourses = $this->enrollmentModel->getUserEnrollments($user_id);
+
+        // Attach materials per enrolled course
+        foreach ($enrolledCourses as &$enrollment) {
+            $enrollment['materials'] = $this->materialModel->getMaterialsByCourse($enrollment['course_id']);
+        }
+        unset($enrollment);
         
         // Get all available courses
         $allCourses = $this->courseModel->getAllCourses();

@@ -441,8 +441,11 @@ class AdminController extends Controller
             }
         }
         
-        // Get all courses without instructors
-        $unassignedCourses = $this->courseModel->where('instructor_id', null)->findAll();
+        // Show all courses so admins can (re)assign even if they already have an instructor
+        // This prevents an empty dropdown when all seeded courses are pre-assigned
+        $unassignedCourses = $this->courseModel
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
         
         // Get all courses with instructor info
         $db = \Config\Database::connect();

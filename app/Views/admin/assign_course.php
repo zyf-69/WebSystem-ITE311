@@ -198,47 +198,55 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Course</th>
-                                        <th>Teacher</th>
-                                        <th>Schedule</th>
-                                        <th>Status</th>
+                                <th>Course</th>
+                                <th>Teacher</th>
+                                <th>Schedule</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($allCourses as $course): ?>
-                                        <?php if (!empty($course['instructor_name'])): ?>
-                                            <tr>
-                                                <td>
-                                                    <strong><?= esc($course['title']) ?></strong>
-                                                    <?php if (!empty($course['level'])): ?>
-                                                        <br><small class="text-muted"><?= esc($course['level']) ?></small>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-success"><?= esc($course['instructor_name']) ?></span>
-                                                </td>
-                                                <td>
-                                                    <?php if (!empty($course['start_time']) && !empty($course['end_time'])): ?>
-                                                        <i class="bi bi-clock"></i>
-                                                        <?= date('h:i A', strtotime($course['start_time'])) ?> - 
-                                                        <?= date('h:i A', strtotime($course['end_time'])) ?>
-                                                        <?php if (!empty($course['schedule_days'])): ?>
-                                                            <br><small class="text-muted"><?= esc($course['schedule_days']) ?></small>
-                                                        <?php endif; ?>
-                                                    <?php else: ?>
-                                                        <span class="text-muted">Not Scheduled</span>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td>
-                                                    <?php 
-                                                    $status = $course['status'] ?? 'active';
-                                                    $statusClass = $status === 'active' ? 'success' : ($status === 'inactive' ? 'secondary' : 'warning');
-                                                    ?>
-                                                    <span class="badge bg-<?= $statusClass ?>"><?= ucfirst(esc($status)) ?></span>
-                                                </td>
-                                            </tr>
+                            <?php foreach ($allCourses as $course): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?= esc($course['title']) ?></strong>
+                                        <?php if (!empty($course['level'])): ?>
+                                            <br><small class="text-muted"><?= esc($course['level']) ?></small>
                                         <?php endif; ?>
-                                    <?php endforeach; ?>
+                                    </td>
+                                    <td>
+        <?php if (!empty($course['instructor_name'])): ?>
+                                            <span class="badge bg-success"><?= esc($course['instructor_name']) ?></span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Unassigned</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($course['start_time']) && !empty($course['end_time'])): ?>
+                                            <i class="bi bi-clock"></i>
+                                            <?= date('h:i A', strtotime($course['start_time'])) ?> - 
+                                            <?= date('h:i A', strtotime($course['end_time'])) ?>
+                                            <?php if (!empty($course['schedule_days'])): ?>
+                                                <br><small class="text-muted"><?= esc($course['schedule_days']) ?></small>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">Not Scheduled</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php 
+                                        $status = $course['status'] ?? 'active';
+                                        $statusClass = $status === 'active' ? 'success' : ($status === 'inactive' ? 'secondary' : 'warning');
+                                        ?>
+                                        <span class="badge bg-<?= $statusClass ?>"><?= ucfirst(esc($status)) ?></span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="<?= base_url('course/' . $course['id'] . '/upload') ?>" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-upload"></i> Upload Materials
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
