@@ -18,6 +18,7 @@ class EnrollmentModel extends Model
         'enrollment_date',
         'student_id', // Keep for backward compatibility
         'status',
+        'decline_reason',
         'created_at',
         'updated_at'
     ];
@@ -123,6 +124,13 @@ class EnrollmentModel extends Model
                 ->groupEnd();
         
         $builder->where('course_id', $course_id);
+        
+        // Only check for 'enrolled' or 'pending' status
+        // Allow re-enrollment if status is 'declined'
+        $builder->groupStart()
+                ->where('status', 'enrolled')
+                ->orWhere('status', 'pending')
+                ->groupEnd();
         
         // Exclude soft-deleted enrollments if deleted_at column exists
         if ($this->db->fieldExists('deleted_at', $this->table)) {

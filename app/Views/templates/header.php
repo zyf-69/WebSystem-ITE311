@@ -19,6 +19,23 @@
                     </a>
                 </li>
                 
+                <!-- Notifications dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                        <span id="notificationBadge" class="badge bg-danger position-absolute top-0 start-100 translate-middle" style="display: none; font-size: 0.7rem;">0</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" id="notificationList" aria-labelledby="notificationDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+                        <li><h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                            <span>Notifications</span>
+                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" id="refreshNotifications" title="Refresh">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </h6></li>
+                        <li><div id="notificationItems" class="px-3 py-2 text-muted small">Loading notifications...</div></li>
+                    </ul>
+                </li>
+                
                 <?php 
                 // Dynamic role-based navigation items
                 $userRole = session()->get('role');

@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\MaterialModel;
 use App\Models\CourseModel;
 use App\Models\EnrollmentModel;
+use App\Models\NotificationModel;
+use App\Models\UserModel;
 use CodeIgniter\Controller;
 
 class Materials extends Controller
@@ -12,6 +14,8 @@ class Materials extends Controller
     protected $materialModel;
     protected $courseModel;
     protected $enrollmentModel;
+    protected $notificationModel;
+    protected $userModel;
     protected $session;
 
     public function __construct()
@@ -19,6 +23,8 @@ class Materials extends Controller
         $this->materialModel = new MaterialModel();
         $this->courseModel = new CourseModel();
         $this->enrollmentModel = new EnrollmentModel();
+        $this->notificationModel = new NotificationModel();
+        $this->userModel = new UserModel();
         $this->session = session();
     }
 
@@ -113,6 +119,57 @@ class Materials extends Controller
 
                 $insertId = $this->materialModel->insert($data);
                 if ($insertId) {
+                    // Get uploaded by user info
+                    $uploadedBy = $this->userModel->find($this->session->get('user_id'));
+                    $uploadedByName = $uploadedBy ? $uploadedBy['name'] : 'Teacher';
+                    $fileName = $file->getClientName();
+                    
+                    // Create notifications for all enrolled students in this course
+                    $enrolledStudents = $this->enrollmentModel
+                        ->where('course_id', $courseId)
+                        ->where('status', 'enrolled')
+                        ->findAll();
+                    
+                    // Create notifications for all enrolled students in this course
+                    foreach ($enrolledStudents as $enrollment) {
+                        $studentId = $enrollment['user_id'] ?? $enrollment['student_id'];
+                        if ($studentId) {
+                            $notificationData = [
+                                'user_id' => $studentId,
+                                'message' => "New material [{$fileName}] has been uploaded for course [{$course['title']}]",
+                                'is_read' => 0,
+                                'created_at' => date('Y-m-d H:i:s')
+                            ];
+                            $this->notificationModel->createNotification($notificationData);
+                        }
+                    }
+                    
+                    // Create notifications for all admins
+                    $admins = $this->userModel->where('role', 'admin')->findAll();
+                    if (!empty($admins)) {
+                        foreach ($admins as $admin) {
+                            $adminNotification = [
+                                'user_id' => $admin['id'],
+                                'message' => "[{$uploadedByName}] uploaded new material [{$fileName}] for course [{$course['title']}]",
+                                'is_read' => 0,
+                                'created_at' => date('Y-m-d H:i:s')
+                            ];
+                            $this->notificationModel->createNotification($adminNotification);
+                        }
+                    }
+                    
+                    // Also notify the teacher who uploaded (for confirmation)
+                    $teacherId = $this->session->get('user_id');
+                    if ($teacherId) {
+                        $teacherNotification = [
+                            'user_id' => $teacherId,
+                            'message' => "You have successfully uploaded material [{$fileName}] for course [{$course['title']}]",
+                            'is_read' => 0,
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+                        $this->notificationModel->createNotification($teacherNotification);
+                    }
+                    
                     $this->session->setFlashdata('success', 'Material uploaded successfully and saved to database.');
                     return redirect()->to('/course/' . $courseId . '/upload');
                 } else {
@@ -155,12 +212,85 @@ class Materials extends Controller
             return $check;
         }
 
+        // Get course and file info before deletion
+        $course = $this->courseModel->find($material['course_id']);
+        $fileName = $material['file_name'];
+        $courseId = $material['course_id'];
+        
+        // Get deleted by user info
+        $deletedBy = $this->userModel->find($this->session->get('user_id'));
+        $deletedByName = $deletedBy ? $deletedBy['name'] : 'User';
+
+        // Delete the physical file
         $absolutePath = rtrim(WRITEPATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $material['file_path'];
         if (is_file($absolutePath)) {
             @unlink($absolutePath);
         }
 
-        $this->materialModel->delete($materialId);
+        // Delete from database
+        $deleteResult = $this->materialModel->delete($materialId);
+        
+        // Only create notifications if deletion was successful
+        if ($deleteResult) {
+            // Create notifications for all enrolled students in this course
+            $enrolledStudents = $this->enrollmentModel
+                ->where('course_id', $courseId)
+                ->where('status', 'enrolled')
+                ->findAll();
+            
+            foreach ($enrolledStudents as $enrollment) {
+                $studentId = $enrollment['user_id'] ?? $enrollment['student_id'];
+                if ($studentId) {
+                    $notificationData = [
+                        'user_id' => $studentId,
+                        'message' => "Material [{$fileName}] has been deleted from course [{$course['title']}]",
+                        'is_read' => 0,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ];
+                    $this->notificationModel->createNotification($notificationData);
+                }
+            }
+            
+            // Create notifications for all admins
+            $admins = $this->userModel->where('role', 'admin')->findAll();
+            foreach ($admins as $admin) {
+                $adminNotification = [
+                    'user_id' => $admin['id'],
+                    'message' => "[{$deletedByName}] deleted material [{$fileName}] from course [{$course['title']}]",
+                    'is_read' => 0,
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+                $this->notificationModel->createNotification($adminNotification);
+            }
+            
+            // Notify the course instructor (if different from the one who deleted)
+            if ($course && !empty($course['instructor_id'])) {
+                $instructorId = (int) $course['instructor_id'];
+                $currentUserId = (int) $this->session->get('user_id');
+                
+                // Only notify if instructor is different from the one who deleted
+                if ($instructorId !== $currentUserId) {
+                    $instructorNotification = [
+                        'user_id' => $instructorId,
+                        'message' => "Material [{$fileName}] has been deleted from your course [{$course['title']}]",
+                        'is_read' => 0,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ];
+                    $this->notificationModel->createNotification($instructorNotification);
+                }
+            }
+            
+            // Also notify the person who deleted (for confirmation)
+            $currentUserId = (int) $this->session->get('user_id');
+            $deleterNotification = [
+                'user_id' => $currentUserId,
+                'message' => "You have successfully deleted material [{$fileName}] from course [{$course['title']}]",
+                'is_read' => 0,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            $this->notificationModel->createNotification($deleterNotification);
+        }
+        
         $this->session->setFlashdata('success', 'Material deleted successfully.');
         return redirect()->to('/course/' . $material['course_id'] . '/upload');
     }
